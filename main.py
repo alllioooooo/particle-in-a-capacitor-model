@@ -112,47 +112,55 @@ plt.show()
 # Инициализация Pygame
 pygame.init()
 
-# Установка размеров окна
+# Установка размеров окна и базовых параметров
 width, height = 600, 400
 screen = pygame.display.set_mode((width, height))
+clock = pygame.time.Clock()
 
 # Цвета
 WHITE = (255, 255, 255)
 RED = (255, 0, 0)
 BLACK = (0, 0, 0)
 
-# Преобразование координат электрона в пиксели
-scale = width / L
-electron_radius = 5  # Размер частицы в пикселях
+# Преобразование координат в пиксели
+scale_x = width / L
+scale_y = height / (R - r)
+offset_y = height / 2
 
-# Основной цикл анимации
+# Отрисовка траектории
+trail = []
+
+# Основной цикл игры
 running = True
-frame = 0
 while running:
     # Обработка событий
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
 
-    # Очистка экрана
+    # Заполнение фона
     screen.fill(WHITE)
 
     # Рисование конденсатора
-    pygame.draw.rect(screen, BLACK, [0, height / 2 - r * scale, width, 2 * r * scale], 2)
-    pygame.draw.rect(screen, BLACK, [0, height / 2 - R * scale, width, 2 * R * scale], 2)
+    pygame.draw.rect(screen, BLACK, [0, offset_y - r * scale_y, width, (R - r) * scale_y * 2], 2)
 
-    # Рисование электрона
-    if frame < len(sol.t):
-        x = V * sol.t[frame] * scale
-        y = height / 2 + sol.y[0][frame] * scale
-        pygame.draw.circle(screen, RED, (int(x), int(y)), electron_radius)
+    # Рисование траектории частицы
+    for pos in trail:
+        pygame.draw.circle(screen, BLACK, (int(pos[0] * scale_x), int(offset_y - pos[1] * scale_y)), 2)
 
-    # Обновление кадра
+    # Расчет положения частицы
+    if len(sol.t) > 0:
+        x_pos = V * sol.t[0]
+        y_pos = sol.y[0, 0]
+        trail.append((x_pos, y_pos))
+        pygame.draw.circle(screen, RED, (int(x_pos * scale_x), int(offset_y - y_pos * scale_y)), 5)
+        sol.t = sol.t[1:]
+        sol.y = sol.y[:, 1:]
+
+    # Обновление экрана
     pygame.display.flip()
-    frame += 1
+    clock.tick(60)
 
-    # Задержка для контроля скорости анимации
-    pygame.time.delay(10)
-
-# Закрытие Pygame
+# Завершение работы Pygame
 pygame.quit()
+
